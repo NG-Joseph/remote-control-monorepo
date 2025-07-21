@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "Remote Control",
+    "slug": "remote-control-platform",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "remotecontrol",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.remotecontrol.platform",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow Remote Control to access your camera for video calls.",
+        "NSMicrophoneUsageDescription": "Allow Remote Control to access your microphone for voice calls."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.remotecontrol.platform",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-dev-client",
+      [
+        "@config-plugins/react-native-webrtc",
+      {
+          "cameraPermission": "Allow Remote Control to access your camera for video calls.",
+          "microphonePermission": "Allow Remote Control to access your microphone for voice calls."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "42a05699-80f2-48eb-ab3e-742cf1d832f1"
+      }
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "name": "host-app",
+  "version": "1.0.0",
+  "description": "Electron host application for remote control platform",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc && cp src/preload.js dist/preload.js && cp src/index.html dist/index.html",
+    "dev": "concurrently \"tsc --watch\" \"electron dist/main.js\"",
+    "start": "electron dist/main.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+  },
+  "keywords": [
+    "electron",
+    "remote-control",
+    "webrtc",
+    "screen-sharing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "*",
+    "@typescript-eslint/eslint-plugin": "*",
+    "@typescript-eslint/parser": "*",
+    "concurrently": "^8.2.2",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "electron-rebuild": "^3.2.9",
+    "eslint": "*",
+    "typescript": "*"
+  },
+  "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.6",
+    "@remote-control/shared-dto": "*",
+    "@remote-control/webrtc-utils": "*",
+    "robotjs": "^0.6.0",
+    "socket.io-client": "^4.7.5"
+  },
+  "build": {
+    "appId": "com.remotecontrol.hostapp",
+    "productName": "Remote Control Host",
+    "directories": {
+      "output": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

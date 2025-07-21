@@ -1,0 +1,151 @@
+{
+  "folders": [
+    {
+      "name": "🏠 Root",
+      "path": "."
+    },
+    {
+      "name": "📱 Mobile App",
+      "path": "./apps/mobile-app"
+    },
+    {
+      "name": "🖥️ Signaling Server",
+      "path": "./apps/signaling-server"
+    },
+    {
+      "name": "📦 Shared DTO",
+      "path": "./packages/shared-dto"
+    },
+    {
+      "name": "🔧 WebRTC Utils",
+      "path": "./packages/webrtc-utils"
+    }
+  ],
+  "settings": {
+    "typescript.preferences.projectName": "Remote Control Platform",
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+    "typescript.suggest.autoImports": true,
+    "typescript.suggest.paths": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.expo": true,
+      "**/*.tsbuildinfo": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.expo": true,
+      "**/*.tsbuildinfo": true
+    },
+    "eslint.workingDirectories": [
+      "./apps/mobile-app",
+      "./apps/signaling-server",
+      "./packages/shared-dto",
+      "./packages/webrtc-utils"
+    ],
+    "typescript.preferences.root": true
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.vscode-typescript-next",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "expo.vscode-expo-tools",
+      "ms-vscode.vscode-json"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Install Dependencies",
+        "type": "shell",
+        "command": "yarn",
+        "args": ["install"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Build All",
+        "type": "shell",
+        "command": "yarn",
+        "args": ["build"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": ["$tsc"]
+      },
+      {
+        "label": "Start Mobile App",
+        "type": "shell",
+        "command": "yarn",
+        "args": ["mobile"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Start Signaling Server",
+        "type": "shell",
+        "command": "yarn",
+        "args": ["server"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Lint All",
+        "type": "shell",
+        "command": "yarn",
+        "args": ["lint"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": ["$eslint-stylish"]
+      },
+      {
+        "label": "Type Check All",
+        "type": "shell",
+        "command": "yarn",
+        "args": ["type-check"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": ["$tsc"]
+      }
+    ]
+  }
+}

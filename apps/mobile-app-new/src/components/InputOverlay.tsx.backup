@@ -1,0 +1,550 @@
+/**
+ * @fileoverview Input overlay): InputOverlayProps) {
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [textInput, setTextInput] = useState('');
+  const [showTrackpad, setShowTrackpad] = useState(false);
+  
+  // Trackpad gesture tracking
+  const lastTouchRef = useRef<{ x: number; y: number; timestamp: number } | null>(null);
+  const gestureStartRef = useRef<{ x: number; y: number; timestamp: number } | null>(null);
+  
+/**
+ * @fileoverview Input overlay component for sending control commands to remote host
+ * 
+ * Provides virtual controls for keyboard input, mouse/touch gestures,
+ * and system commands based on host permissions.
+ */
+
+import React, { useState, useCallback, useRef } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  TextInput,
+  Alert,
+  PanResponder,
+  Dimensions,
+  GestureResponderEvent,
+  PanResponderGestureState,
+} from 'react-native';
+import type { ControlCommand, TouchGesture, KeyboardInput } from '../types';
+
+export interface InputOverlayProps {
+  allowedKeys?: string[];
+  isConnected: boolean;
+  onSendCommand: (command: ControlCommand) => void;
+  onDisconnect: () => void;
+}
+
+export function InputOverlay({
+  allowedKeys = [],
+  isConnected,
+  onSendCommand,
+  onDisconnect,
+}: InputOverlayProps) {
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [textInput, setTextInput] = useState('');
+  const [showTrackpad, setShowTrackpad] = useState(false);
+  
+  // Trackpad gesture tracking
+  const lastTouchRef = useRef<{ x: number; y: number; timestamp: number } | null>(null);
+  const gestureStartRef = useRef<{ x: number; y: number; timestamp: number } | null>(null);
+
+  const sendKeyboardCommand = useCallback((key: string, action: 'press' | 'release' = 'press') => {
+    const command: ControlCommand = {
+      type: 'keyboard',
+      data: {
+        key,
+        action,
+        modifiers: [],
+      } as KeyboardInput,
+      timestamp: Date.now(),
+    };
+    onSendCommand(command);
+  }, [onSendCommand]);
+
+  const sendTouchCommand = useCallback((gesture: TouchGesture) => {
+    const command: ControlCommand = {
+      type: 'touch',
+      data: gesture,
+      timestamp: Date.now(),
+    };
+    onSendCommand(command);
+  }, [onSendCommand]);
+
+  // Create PanResponder for trackpad gestures
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      
+      onPanResponderGrant: (event: GestureResponderEvent) => {
+        const { locationX, locationY } = event.nativeEvent;
+        const timestamp = Date.now();
+        
+        gestureStartRef.current = { x: locationX, y: locationY, timestamp };
+        lastTouchRef.current = { x: locationX, y: locationY, timestamp };
+      },
+      
+      onPanResponderMove: (event: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+        // Simple mouse movement simulation
+        const { dx, dy } = gestureState;
+        const sensitivity = 0.002; // Adjust as needed
+        
+        sendTouchCommand({
+          type: 'drag',
+          startPoint: { x: 0.5 + dx * sensitivity, y: 0.5 + dy * sensitivity, timestamp: Date.now() },
+          endPoint: { x: 0.5 + dx * sensitivity, y: 0.5 + dy * sensitivity, timestamp: Date.now() }
+        });
+      },
+      
+      onPanResponderRelease: (event: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+        const distance = Math.sqrt(gestureState.dx ** 2 + gestureState.dy ** 2);
+        const duration = Date.now() - (gestureStartRef.current?.timestamp || 0);
+        
+        if (distance < 10 && duration < 300) {
+          // Tap gesture (mouse click)
+          sendTouchCommand({
+            type: 'tap',
+            startPoint: { x: 0.5, y: 0.5, timestamp: Date.now() }
+          });
+        }
+        
+        gestureStartRef.current = null;
+        lastTouchRef.current = null;
+      }
+    })
+  ).current;
+ * and system commands based on host permissions.
+ */
+
+import React, { useState, useCallback, useRef } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  TextInput,
+  Alert,
+  PanResponder,
+  Dimensions,
+  GestureResponderEvent,
+  PanResponderGestureState,
+} from 'react-native';
+import type { ControlCommand, TouchGesture, KeyboardInput } from '../types';
+
+export interface InputOverlayProps {
+  allowedKeys?: string[];
+  isConnected: boolean;
+  onSendCommand: (command: ControlCommand) => void;
+  onDisconnect: () => void;
+}
+
+export function InputOverlay({
+  allowedKeys = [],
+  isConnected,
+  onSendCommand,
+  onDisconnect,
+}: InputOverlayProps) {
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [textInput, setTextInput] = useState('');
+  const [showTrackpad, setShowTrackpad] = useState(false);
+  
+  // Trackpad gesture tracking
+  const lastTouchRef = useRef<{ x: number; y: number; timestamp: number } | null>(null);
+  const gestureStartRef = useRef<{ x: number; y: number; timestamp: number } | null>(null);
+
+  const sendKeyboardCommand = useCallback((key: string, action: 'press' | 'release' = 'press') => {
+    const command: ControlCommand = {
+      type: 'keyboard',
+      data: {
+        key,
+        action,
+        modifiers: [],
+      } as KeyboardInput,
+      timestamp: Date.now(),
+    };
+    onSendCommand(command);
+  }, [onSendCommand]);
+
+  const sendTextInput = useCallback(() => {
+    if (!textInput.trim()) return;
+    
+    // Send each character as a key press
+    for (const char of textInput) {
+      sendKeyboardCommand(char);
+    }
+    
+    setTextInput('');
+    setShowKeyboard(false);
+  }, [textInput, sendKeyboardCommand]);
+
+  const handleDisconnect = useCallback(() => {
+    Alert.alert(
+      'Disconnect',
+      'Are you sure you want to disconnect from the host?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Disconnect', style: 'destructive', onPress: onDisconnect }
+      ]
+    );
+  }, [onDisconnect]);
+
+  if (!isConnected) {
+    return null;
+  }
+
+  return (
+    <>
+      <View style={styles.overlay}>
+        {/* Control Bar */}
+        <View style={styles.controlBar}>
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={() => setShowKeyboard(true)}
+          >
+            <Text style={styles.controlButtonText}>KB</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.controlButton, showTrackpad && styles.activeButton]}
+            onPress={() => setShowTrackpad(!showTrackpad)}
+          >
+            <Text style={styles.controlButtonText}>🖱️</Text>
+          </TouchableOpacity>
+
+          {allowedKeys.includes('Escape') && (
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => sendKeyboardCommand('Escape')}
+            >
+              <Text style={styles.controlButtonText}>ESC</Text>
+            </TouchableOpacity>
+          )}
+
+          {allowedKeys.includes('Tab') && (
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => sendKeyboardCommand('Tab')}
+            >
+              <Text style={styles.controlButtonText}>TAB</Text>
+            </TouchableOpacity>
+          )}
+
+          <View style={styles.spacer} />
+
+          <TouchableOpacity
+            style={[styles.controlButton, styles.disconnectButton]}
+            onPress={handleDisconnect}
+          >
+            <Text style={styles.disconnectButtonText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Arrow Keys */}
+        {(allowedKeys.includes('ArrowUp') || allowedKeys.includes('ArrowDown') || 
+          allowedKeys.includes('ArrowLeft') || allowedKeys.includes('ArrowRight')) && (
+          <View style={styles.arrowKeys}>
+            {allowedKeys.includes('ArrowUp') && (
+              <TouchableOpacity
+                style={styles.arrowButton}
+                onPress={() => sendKeyboardCommand('ArrowUp')}
+              >
+                <Text style={styles.arrowText}>↑</Text>
+              </TouchableOpacity>
+            )}
+            
+            <View style={styles.arrowRow}>
+              {allowedKeys.includes('ArrowLeft') && (
+                <TouchableOpacity
+                  style={styles.arrowButton}
+                  onPress={() => sendKeyboardCommand('ArrowLeft')}
+                >
+                  <Text style={styles.arrowText}>←</Text>
+                </TouchableOpacity>
+              )}
+              
+              {allowedKeys.includes('ArrowRight') && (
+                <TouchableOpacity
+                  style={styles.arrowButton}
+                  onPress={() => sendKeyboardCommand('ArrowRight')}
+                >
+                  <Text style={styles.arrowText}>→</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {allowedKeys.includes('ArrowDown') && (
+              <TouchableOpacity
+                style={styles.arrowButton}
+                onPress={() => sendKeyboardCommand('ArrowDown')}
+              >
+                <Text style={styles.arrowText}>↓</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Space and Enter */}
+        <View style={styles.bottomControls}>
+          {allowedKeys.includes(' ') && (
+            <TouchableOpacity
+              style={[styles.controlButton, styles.spaceButton]}
+              onPress={() => sendKeyboardCommand(' ')}
+            >
+              <Text style={styles.controlButtonText}>SPACE</Text>
+            </TouchableOpacity>
+          )}
+
+          {allowedKeys.includes('Enter') && (
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => sendKeyboardCommand('Enter')}
+            >
+              <Text style={styles.controlButtonText}>ENTER</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Virtual Trackpad */}
+        {showTrackpad && (
+          <View style={styles.trackpadContainer}>
+            <View style={styles.trackpadHeader}>
+              <Text style={styles.trackpadTitle}>Virtual Mouse</Text>
+              <TouchableOpacity
+                style={styles.trackpadCloseButton}
+                onPress={() => setShowTrackpad(false)}
+              >
+                <Text style={styles.trackpadCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.trackpadArea} {...panResponder.panHandlers}>
+              <Text style={styles.trackpadInstructions}>
+                Tap to click • Drag to move mouse • Swipe to scroll
+              </Text>
+            </View>
+            
+            <View style={styles.mouseButtons}>
+              <TouchableOpacity
+                style={styles.mouseButton}
+                onPress={() => sendTouchCommand({
+                  type: 'tap',
+                  startPoint: { x: 0.5, y: 0.5, timestamp: Date.now() }
+                })}
+              >
+                <Text style={styles.mouseButtonText}>L</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.mouseButton}
+                onPress={() => sendTouchCommand({
+                  type: 'tap',
+                  startPoint: { x: 0.5, y: 0.5, timestamp: Date.now() }
+                })}
+                onLongPress={() => {
+                  // Right click simulation
+                  sendTouchCommand({
+                    type: 'tap',
+                    startPoint: { x: 0.5, y: 0.5, timestamp: Date.now() }
+                  });
+                }}
+              >
+                <Text style={styles.mouseButtonText}>R</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Keyboard Input Modal */}
+      <Modal
+        visible={showKeyboard}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowKeyboard(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.keyboardModal}>
+            <Text style={styles.modalTitle}>Type Text</Text>
+            
+            <TextInput
+              style={styles.textInput}
+              value={textInput}
+              onChangeText={setTextInput}
+              placeholder="Enter text to send..."
+              multiline
+              autoFocus
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setTextInput('');
+                  setShowKeyboard(false);
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.sendButton]}
+                onPress={sendTextInput}
+              >
+                <Text style={styles.sendButtonText}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'box-none',
+  },
+  controlBar: {
+    position: 'absolute',
+    top: 50,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 8,
+    padding: 8,
+  },
+  controlButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginRight: 8,
+    minWidth: 44,
+    alignItems: 'center',
+  },
+  activeButton: {
+    backgroundColor: 'rgba(0, 122, 255, 0.8)',
+  },
+  controlButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  spacer: {
+    flex: 1,
+  },
+  disconnectButton: {
+    backgroundColor: 'rgba(255, 87, 34, 0.8)',
+    marginRight: 0,
+  },
+  disconnectButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  arrowKeys: {
+    position: 'absolute',
+    bottom: 120,
+    right: 16,
+    alignItems: 'center',
+  },
+  arrowRow: {
+    flexDirection: 'row',
+    marginVertical: 4,
+  },
+  arrowButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 4,
+  },
+  arrowText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  bottomControls: {
+    position: 'absolute',
+    bottom: 50,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  spaceButton: {
+    minWidth: 120,
+    marginRight: 0,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  keyboardModal: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f5f5f5',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  sendButton: {
+    backgroundColor: '#007AFF',
+  },
+  sendButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});

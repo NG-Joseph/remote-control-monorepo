@@ -1,0 +1,27 @@
+{
+  "name": "@remote-control/webrtc-utils",
+  "version": "1.0.0",
+  "description": "WebRTC utilities for remote control platform",
+  "main": "dist/index.js",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
+  },
+  "dependencies": {
+    "@remote-control/shared-dto": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

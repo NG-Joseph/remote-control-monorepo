@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "rootDir": "./src"
+  },
+  "include": ["src/main.ts", "src/preload.ts"],
+  "exclude": ["src/renderer.ts"]
+}

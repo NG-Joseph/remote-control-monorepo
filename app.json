@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "42a05699-80f2-48eb-ab3e-742cf1d832f1"
+      }
+    },
+    "android": {
+      "package": "com.ngjoseph.remotecontrolplatform"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "remote-control-platform",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Remote control platform with React Native app and NestJS signaling server",
+  "author": "Joseph Nwokotubo <jcool4liv@gmail.com>",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "yarn workspaces run build",
+    "lint": "yarn workspaces run lint",
+    "lint:fix": "yarn workspaces run lint:fix",
+    "type-check": "yarn workspaces run type-check",
+    "test": "yarn workspaces run test",
+    "clean": "yarn workspaces run clean && rm -rf node_modules",
+    "dev": "concurrently \"yarn workspace signaling-server start:dev\" \"yarn workspace mobile-app start\"",
+    "dev:all": "concurrently \"yarn workspace signaling-server start:dev\" \"yarn workspace mobile-app start\" \"yarn workspace host-app dev\"",
+    "mobile": "yarn workspace mobile-app start",
+    "server": "yarn workspace signaling-server start:dev",
+    "host": "yarn workspace host-app dev",
+    "host:start": "yarn workspace host-app start",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0",
+    "prettier": "^3.3.0",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "yarn": ">=1.22.0"
+  },
+  "dependencies": {
+    "expo": "~53.0.20",
+    "react": "19.0.0",
+    "react-native": "0.79.5"
+  }
+}

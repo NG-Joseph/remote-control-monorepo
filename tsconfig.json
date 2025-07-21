@@ -1,0 +1,65 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "incremental": true,
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@remote-control/shared-dto": [
+        "./packages/shared-dto/src"
+      ],
+      "@remote-control/shared-dto/*": [
+        "./packages/shared-dto/src/*"
+      ],
+      "@remote-control/webrtc-utils": [
+        "./packages/webrtc-utils/src"
+      ],
+      "@remote-control/webrtc-utils/*": [
+        "./packages/webrtc-utils/src/*"
+      ]
+    }
+  },
+  "include": [],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".expo"
+  ],
+  "references": [
+    {
+      "path": "./apps/mobile-app"
+    },
+    {
+      "path": "./apps/signaling-server"
+    },
+    {
+      "path": "./apps/host-app"
+    },
+    {
+      "path": "./packages/shared-dto"
+    },
+    {
+      "path": "./packages/webrtc-utils"
+    }
+  ],
+  "extends": "expo/tsconfig.base"
+}
