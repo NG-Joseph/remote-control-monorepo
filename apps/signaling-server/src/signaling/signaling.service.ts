@@ -8,10 +8,18 @@ import { Socket } from 'socket.io';
 import { SignalPayloadDto } from './dto/signal-payload.dto';
 import { CommandDto } from './dto/command.dto';
 
+interface PendingRequest {
+  clientId: string;
+  hostId: string;
+  timestamp: number;
+  clientSocket: Socket;
+}
+
 @Injectable()
 export class SignalingService {
   private hosts = new Map<string, { socket: Socket; allowedKeys: string[] }>();
   private clients = new Map<string, Socket>();
+  private pendingRequests = new Map<string, PendingRequest>(); // key: `${hostId}-${clientId}`
 
   registerClient(socket: Socket): void {
     // Register a generic client (could be host or mobile client)
@@ -24,6 +32,9 @@ export class SignalingService {
     
     // Send confirmation back to the host
     socket.emit('host_registered', { hostId, allowedKeys });
+    
+    // Check for any pending requests for this host that arrived before host connected
+    this.processPendingRequestsForHost(hostId);
     
     this.notifyClientsUpdated();
   }
@@ -43,6 +54,10 @@ export class SignalingService {
     if (hostEntry) {
       console.log(`[SIGNAL] Removing host: ${hostEntry[0]}`);
       this.hosts.delete(hostEntry[0]);
+      
+      // Clean up pending requests for this host
+      this.cleanupPendingRequestsForHost(hostEntry[0]);
+      
       this.notifyClientsUpdated();
     }
     
@@ -51,6 +66,9 @@ export class SignalingService {
       if (s === socket) {
         console.log(`[SIGNAL] Removing mobile client: ${id}`);
         this.clients.delete(id);
+        
+        // Clean up pending requests for this client
+        this.cleanupPendingRequestsForClient(id);
       }
     });
   }
@@ -65,21 +83,49 @@ export class SignalingService {
   requestConnection(hostId: string, clientId: string): void {
     console.log(`[SIGNAL] Connection request from ${clientId} to ${hostId}`);
     const host = this.hosts.get(hostId);
+    const clientSocket = this.clients.get(clientId);
+    
+    if (!clientSocket) {
+      console.warn(`[SIGNAL] Client ${clientId} not found for connection request`);
+      return;
+    }
+    
     if (host) {
+      // Host is online, send request immediately
+      console.log(`[SIGNAL] Host ${hostId} is online, sending request immediately`);
       host.socket.emit('connect_request', { clientId });
     } else {
-      console.warn(`[SIGNAL] Host ${hostId} not found for connection request`);
+      // Host is not online yet, store the request for later
+      console.log(`[SIGNAL] Host ${hostId} not online, storing pending request`);
+      const requestKey = `${hostId}-${clientId}`;
+      this.pendingRequests.set(requestKey, {
+        clientId,
+        hostId,
+        timestamp: Date.now(),
+        clientSocket
+      });
+      
+      // Notify client that request is pending
+      clientSocket.emit('connection_pending', { 
+        hostId,
+        message: 'Waiting for host to come online...' 
+      });
     }
   }
 
   approveConnection(hostId: string, clientId: string): void {
     console.log(`[SIGNAL] Connection approved by ${hostId} for client ${clientId}`);
     const clientSocket = this.clients.get(clientId);
+    const requestKey = `${hostId}-${clientId}`;
+    
     if (clientSocket) {
       clientSocket.emit('connection_approved', { 
         hostId,
         clientId 
       });
+      
+      // Remove from pending requests if it was there
+      this.pendingRequests.delete(requestKey);
     } else {
       console.warn(`[SIGNAL] Client ${clientId} not found for approval notification`);
     }
@@ -121,6 +167,57 @@ export class SignalingService {
 
     console.log(`[SIGNAL] Executing authorized command: ${command}`);
     host.socket.emit('command', { clientId, command, type });
+  }
+
+  private processPendingRequestsForHost(hostId: string): void {
+    console.log(`[SIGNAL] Processing pending requests for host: ${hostId}`);
+    const host = this.hosts.get(hostId);
+    if (!host) return;
+
+    // Find all pending requests for this host
+    Array.from(this.pendingRequests.entries()).forEach(([key, request]) => {
+      if (request.hostId === hostId) {
+        console.log(`[SIGNAL] Forwarding pending request from ${request.clientId} to ${hostId}`);
+        
+        // Send the request to the host
+        host.socket.emit('connect_request', { clientId: request.clientId });
+        
+        // Notify client that request has been forwarded
+        if (request.clientSocket.connected) {
+          request.clientSocket.emit('connection_forwarded', { 
+            hostId,
+            message: 'Host is now online, request forwarded' 
+          });
+        }
+      }
+    });
+  }
+
+  private cleanupPendingRequestsForHost(hostId: string): void {
+    Array.from(this.pendingRequests.entries()).forEach(([key, request]) => {
+      if (request.hostId === hostId) {
+        console.log(`[SIGNAL] Cleaning up pending request for disconnected host: ${hostId}`);
+        
+        // Notify client that host disconnected
+        if (request.clientSocket.connected) {
+          request.clientSocket.emit('host_disconnected', { 
+            hostId,
+            message: 'Host has disconnected' 
+          });
+        }
+        
+        this.pendingRequests.delete(key);
+      }
+    });
+  }
+
+  private cleanupPendingRequestsForClient(clientId: string): void {
+    Array.from(this.pendingRequests.entries()).forEach(([key, request]) => {
+      if (request.clientId === clientId) {
+        console.log(`[SIGNAL] Cleaning up pending request for disconnected client: ${clientId}`);
+        this.pendingRequests.delete(key);
+      }
+    });
   }
 
   private notifyClientsUpdated(): void {
